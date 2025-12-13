@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi Games Hub</title>
+    <title>NEON GAMES HUB</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="particles-js"></div> <!-- Particle background -->
+
     <header>
-        <h1>Multi Games Hub</h1>
-        <p class="subtitle">A collection of 20 classic games</p>
+        <h1>NEON GAMES HUB</h1>
+        <p class="subtitle">20 High-End Classic Games | Cyber Edition</p>
     </header>
 
     <div id="home" class="home-grid">
@@ -36,9 +38,30 @@
     </div>
 
     <div id="game-area" class="hidden">
-        <button id="back-btn" onclick="backToHome()">← Back</button>
+        <button id="back-btn" onclick="backToHome()">← BACK TO HUB</button>
         <div id="game-container"></div>
     </div>
+
+    <!-- Particles.js for background effect -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#00ffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ff00ff", "opacity": 0.4, "width": 1 },
+                "move": { "enable": true, "speed": 2 }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" } }
+            },
+            "retina_detect": true
+        });
+    </script>
 
     <script src="script.js"></script>
 </body>
