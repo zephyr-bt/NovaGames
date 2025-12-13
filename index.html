@@ -1,1 +1,45 @@
-.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi Games Hub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Multi Games Hub</h1>
+        <p class="subtitle">A collection of 20 classic games</p>
+    </header>
+
+    <div id="home" class="home-grid">
+        <button onclick="loadGame('tictactoe')">Tic Tac Toe</button>
+        <button onclick="loadGame('chess')">Chess (Basic)</button>
+        <button onclick="loadGame('pong')">Ping Pong</button>
+        <button onclick="loadGame('dino')">Dino Run</button>
+        <button onclick="loadGame('snake')">Snake (Cloud Fly)</button>
+        <button onclick="loadGame('memory')">Memory Match</button>
+        <button onclick="loadGame('flappy')">Flappy Bird</button>
+        <button onclick="loadGame('tetris')">Tetris</button>
+        <button onclick="loadGame('breakout')">Breakout</button>
+        <button onclick="loadGame('spaceinvaders')">Space Invaders</button>
+        <button onclick="loadGame('pacman')">Pac-Man</button>
+        <button onclick="loadGame('sudoku')">Sudoku</button>
+        <button onclick="loadGame('minesweeper')">Minesweeper</button>
+        <button onclick="loadGame('2048')">2048</button>
+        <button onclick="loadGame('bejeweled')">Bejeweled</button>
+        <button onclick="loadGame('towerdefense')">Tower Defense</button>
+        <button onclick="loadGame('racing')">Racing Game</button>
+        <button onclick="loadGame('platformer')">Platformer</button>
+        <button onclick="loadGame('puzzle')">Puzzle Bobble</button>
+        <button onclick="loadGame('shooter')">Shooter</button>
+    </div>
+
+    <div id="game-area" class="hidden">
+        <button id="back-btn" onclick="backToHome()">← Back</button>
+        <div id="game-container"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
