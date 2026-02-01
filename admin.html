@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevStash | Admin Protocol</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { page: '#050505', panel: '#0a0a0a', border: '#222' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #050505; color: #fff; }
+        .input-dark { background: #0F0F0F; border: 1px solid #222; color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; transition: 0.2s; }
+        .input-dark:focus { border-color: #3b82f6; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="min-h-screen font-sans">
+
+    <div id="lock-screen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4">
+        <div class="text-center space-y-4 max-w-sm w-full">
+            <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-2xl font-bold">Admin Access</h1>
+            <input type="password" id="pass-input" class="input-dark text-center tracking-[0.5em]" placeholder="PASSCODE" onkeyup="checkPass(event)">
+            <button onclick="unlock()" class="w-full bg-white text-black font-bold py-3 rounded-lg hover:bg-zinc-200 transition">UNLOCK</button>
+            <p id="error-msg" class="text-red-500 text-xs hidden">ACCESS DENIED</p>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden max-w-6xl mx-auto p-6">
+        
+        <header class="flex justify-between items-center mb-10 py-4 border-b border-border">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center"><i data-lucide="shield-check" class="w-5 h-5"></i></div>
+                <div>
+                    <h1 class="font-bold text-xl">Command Center</h1>
+                    <p class="text-zinc-500 text-xs">Manage Stash Database</p>
+                </div>
+            </div>
+            <a href="index.html" class="text-zinc-500 hover:text-white text-sm flex items-center gap-2">View Site <i data-lucide="external-link" class="w-4 h-4"></i></a>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5 text-green-500"></i> New Resource</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-zinc-500 uppercase font-bold">Title</label>
+                            <input id="in-title" class="input-dark" placeholder="e.g. Glassmorphism Card">
+                        </div>
+                        
+                        <div>
+                            <label class="text-xs text-zinc-500 uppercase font-bold">Category</label>
+                            <select id="in-cat" class="input-dark text-zinc-400">
+                                <option value="ui">UI Component (CSS/HTML)</option>
+                                <option value="func">Javascript Function</option>
+                                <option value="note">Study Note / Cheat Sheet</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-zinc-500 uppercase font-bold">Description</label>
+                            <textarea id="in-desc" rows="2" class="input-dark resize-none" placeholder="Short summary..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-zinc-500 uppercase font-bold">Code / Content</label>
+                            <textarea id="in-code" rows="10" class="input-dark font-mono text-xs" placeholder="Paste code here..."></textarea>
+                        </div>
+
+                        <button id="btn-post" onclick="postItem()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                            <i data-lucide="upload-cloud" class="w-4 h-4"></i> Upload to Database
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="glass p-6 rounded-2xl h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="font-bold flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-purple-500"></i> Active Database</h2>
+                        <button onclick="loadList()" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-white transition">Refresh</button>
+                    </div>
+
+                    <div id="db-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                        <div class="text-center text-zinc-600 py-10">Loading database...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. CONFIG (Same as index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAGwej9kwnaf9XyqreS2kM9_NLpEa6dOM",
+            authDomain: "nexusbio.firebaseapp.com",
+            projectId: "nexusbio",
+            storageBucket: "nexusbio.firebasestorage.app",
+            messagingSenderId: "742997204418",
+            appId: "1:742997204418:web:78084566fbdb81198c8a5b"
+        };
+
+        let db;
+        // 🔑 SET YOUR PASSWORD HERE
+        const ADMIN_PASS = "1234"; 
+
+        window.onload = () => {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+            } catch(e) { console.error(e); }
+            lucide.createIcons();
+            
+            // Auto login if session exists (optional)
+            if(sessionStorage.getItem('auth') === 'true') unlock(true);
+        };
+
+        // --- SECURITY ---
+        function checkPass(e) {
+            if(e.key === 'Enter') unlock();
+        }
+
+        function unlock(skipCheck = false) {
+            const input = document.getElementById('pass-input').value;
+            if (skipCheck || input === ADMIN_PASS) {
+                document.getElementById('lock-screen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                sessionStorage.setItem('auth', 'true');
+                loadList();
+            } else {
+                const err = document.getElementById('error-msg');
+                err.classList.remove('hidden');
+                err.classList.add('animate-pulse');
+            }
+        }
+
+        // --- POST ITEM ---
+        async function postItem() {
+            const title = document.getElementById('in-title').value;
+            const cat = document.getElementById('in-cat').value;
+            const desc = document.getElementById('in-desc').value;
+            const code = document.getElementById('in-code').value;
+
+            if(!title || !code) return alert("Title and Code required.");
+
+            const btn = document.getElementById('btn-post');
+            btn.innerText = "Uploading...";
+
+            try {
+                await db.collection("stash").add({
+                    title, cat, desc, code,
+                    timestamp: new Date()
+                });
+                
+                // Reset Form
+                document.getElementById('in-title').value = '';
+                document.getElementById('in-desc').value = '';
+                document.getElementById('in-code').value = '';
+                
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Posted!`;
+                setTimeout(() => btn.innerHTML = `<i data-lucide="upload-cloud" class="w-4 h-4"></i> Upload to Database`, 2000);
+                
+                loadList(); // Refresh list
+                lucide.createIcons();
+            } catch(e) {
+                alert("Error: " + e.message);
+                btn.innerText = "Failed";
+            }
+        }
+
+        // --- MANAGE LIST ---
+        async function loadList() {
+            const list = document.getElementById('db-list');
+            list.innerHTML = `<div class="text-center text-zinc-600 text-xs animate-pulse">Syncing...</div>`;
+
+            try {
+                const snap = await db.collection("stash").orderBy("timestamp", "desc").get();
+                list.innerHTML = '';
+
+                if(snap.empty) {
+                    list.innerHTML = `<div class="text-center text-zinc-600 py-10">Database is empty.</div>`;
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const badgeColor = data.cat === 'ui' ? 'text-purple-400 border-purple-500/30' : (data.cat === 'func' ? 'text-blue-400 border-blue-500/30' : 'text-green-400 border-green-500/30');
+                    
+                    const item = document.createElement('div');
+                    item.className = "flex justify-between items-center bg-zinc-900/50 p-4 rounded-xl border border-white/5 hover:border-white/10 transition group";
+                    item.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs border ${badgeColor} px-1.5 rounded uppercase font-bold bg-black">${data.cat}</span>
+                                <h3 class="font-bold text-sm text-zinc-200">${data.title}</h3>
+                            </div>
+                            <p class="text-xs text-zinc-500 line-clamp-1 w-64">${data.desc}</p>
+                        </div>
+                        <button onclick="deleteItem('${doc.id}')" class="p-2 bg-black hover:bg-red-500/20 text-zinc-500 hover:text-red-500 rounded-lg transition" title="Delete">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    list.appendChild(item);
+                });
+                lucide.createIcons();
+
+            } catch(e) { console.error(e); }
+        }
+
+        async function deleteItem(id) {
+            if(confirm("Permanently delete this item?")) {
+                await db.collection("stash").doc(id).delete();
+                loadList();
+            }
+        }
+    </script>
+</body>
+</html>
